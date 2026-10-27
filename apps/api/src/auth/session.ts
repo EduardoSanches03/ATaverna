@@ -2,12 +2,15 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { CookieOptions, Request, Response } from 'express';
 import { jwtVerify, SignJWT } from 'jose';
 
-export const SESSION_SECRET = Symbol('SESSION_SECRET');
+export const SESSION_OPTIONS = Symbol('SESSION_OPTIONS');
+
+export interface SessionOptions {
+  secret: string;
+  secureCookie: boolean;
+}
 
 const cookieName = 'session';
 const maxAgeSeconds = 30 * 24 * 60 * 60;
-
-const cookieOptions: CookieOptions = { httpOnly: true, secure: true, sameSite: 'lax', path: '/' };
 
 export interface Session {
   userId: string;
@@ -16,9 +19,11 @@ export interface Session {
 @Injectable()
 export class SessionService {
   private readonly key: Uint8Array;
+  private readonly cookieOptions: CookieOptions;
 
-  constructor(@Inject(SESSION_SECRET) secret: string) {
-    this.key = new TextEncoder().encode(secret);
+  constructor(@Inject(SESSION_OPTIONS) options: SessionOptions) {
+    this.key = new TextEncoder().encode(options.secret);
+    this.cookieOptions = { httpOnly: true, secure: options.secureCookie, sameSite: 'lax', path: '/' };
   }
 
   async start(response: Response, session: Session): Promise<void> {
@@ -28,11 +33,11 @@ export class SessionService {
       .setIssuedAt()
       .setExpirationTime(`${maxAgeSeconds}s`)
       .sign(this.key);
-    response.cookie(cookieName, token, { ...cookieOptions, maxAge: maxAgeSeconds * 1000 });
+    response.cookie(cookieName, token, { ...this.cookieOptions, maxAge: maxAgeSeconds * 1000 });
   }
 
   end(response: Response): void {
-    response.clearCookie(cookieName, cookieOptions);
+    response.clearCookie(cookieName, this.cookieOptions);
   }
 
   // A sessão do cookie, ou null quando falta, expirou ou a assinatura não confere.

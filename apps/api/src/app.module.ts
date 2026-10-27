@@ -5,10 +5,13 @@ import { HealthController } from './health/health.controller.js';
 
 @Module({})
 export class AppModule {
-  static forRoot(options: { databaseUrl: string; sessionSecret: string }): DynamicModule {
+  static forRoot(options: { databaseUrl: string; sessionSecret: string; secureCookie: boolean }): DynamicModule {
     return {
       module: AppModule,
-      imports: [DatabaseModule.forRoot(options.databaseUrl), AuthModule.forRoot(options.sessionSecret)],
+      imports: [
+        DatabaseModule.forRoot(options.databaseUrl),
+        AuthModule.forRoot({ secret: options.sessionSecret, secureCookie: options.secureCookie }),
+      ],
       controllers: [HealthController],
     };
   }

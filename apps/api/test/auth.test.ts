@@ -1,7 +1,8 @@
 import type { INestApplication } from '@nestjs/common';
 import { decodeJwt, SignJWT } from 'jose';
+import pg from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { startTestApp, testSessionSecret } from './support/app.js';
 import { sessionCookie, uniqueUsername } from './support/users.js';
 
@@ -118,6 +119,27 @@ describe('auth', () => {
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ message: 'Dados inválidos' });
     });
+
+    it.each([
+      ['de outro algoritmo', '$bcrypt$v=19$m=19456,t=2,p=1$c2FsdA$aGFzaA'],
+      ['sem parâmetros', '$argon2id$v=19$$c2FsdA$aGFzaA'],
+      ['com parâmetro não numérico', '$argon2id$v=19$m=abc,t=2,p=1$c2FsdA$aGFzaA'],
+      ['com parâmetro fora dos limites', '$argon2id$v=19$m=1,t=0,p=0$c2FsdA$aGFzaA'],
+      ['truncado', '$argon2id$v=19$m=19456'],
+      ['vazio', ''],
+    ])('trata um hash guardado %s como credencial inválida', async (_case, passwordHash) => {
+      // Não há rota que grave um hash inválido: o estado corrompido (legado, importado) vem direto do banco.
+      const username = uniqueUsername();
+      const db = new pg.Client({ connectionString: inject('databaseUrl') });
+      await db.connect();
+      await db.query('insert into users (username, password_hash) values ($1, $2)', [username, passwordHash]);
+      await db.end();
+
+      const response = await request(app.getHttpServer()).post('/auth/login').send({ username, password });
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ message: 'Nome de usuário ou senha inválidos' });
+    });
   });
 
   describe('logout', () => {
@@ -176,5 +198,29 @@ describe('auth', () => {
       expect(response.status).toBe(401);
       expect(response.body).toEqual({ message: 'Não autenticado' });
     });
+  });
+});
+
+describe('auth com cookie sem Secure (desenvolvimento em HTTP)', () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    app = await startTestApp({ secureCookie: false });
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('define e apaga o cookie de sessão sem o atributo Secure', async () => {
+    const register = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ username: uniqueUsername(), password });
+    const logout = await request(app.getHttpServer()).post('/auth/logout').set('Cookie', sessionCookie(register));
+
+    expect(sessionCookie(register)).not.toMatch(/Secure/);
+    expect(sessionCookie(register)).toMatch(/HttpOnly/);
+    expect(sessionCookie(logout)).toMatch(/^session=;/);
+    expect(sessionCookie(logout)).not.toMatch(/Secure/);
   });
 });

@@ -14,20 +14,28 @@ export async function hashPassword(password: string): Promise<string> {
   return `$argon2id$v=19$m=${params.memory},t=${params.passes},p=${params.parallelism}$${nonce.toString('base64url')}$${tag.toString('base64url')}`;
 }
 
+const phc = /^\$argon2id\$v=19\$m=(\d+),t=(\d+),p=(\d+)\$([\w-]+)\$([\w-]+)$/;
+
+// Um hash guardado fora do formato (legado, importado, corrompido) conta como senha errada.
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [, algorithm, , paramList, salt, hash] = stored.split('$');
-  if (algorithm !== 'argon2id' || !paramList || !salt || !hash) {
+  const match = phc.exec(stored);
+  if (!match) {
     return false;
   }
-  const [memory, passes, parallelism] = paramList.split(',').map((pair) => Number(pair.split('=')[1]));
-  const expected = Buffer.from(hash, 'base64url');
-  const tag = await argon2Async('argon2id', {
-    message: password,
-    nonce: Buffer.from(salt, 'base64url'),
-    memory: memory!,
-    passes: passes!,
-    parallelism: parallelism!,
-    tagLength: expected.length,
-  });
-  return timingSafeEqual(tag, expected);
+  const [, memory, passes, parallelism, salt, hash] = match;
+  const expected = Buffer.from(hash!, 'base64url');
+  try {
+    const tag = await argon2Async('argon2id', {
+      message: password,
+      nonce: Buffer.from(salt!, 'base64url'),
+      memory: Number(memory),
+      passes: Number(passes),
+      parallelism: Number(parallelism),
+      tagLength: expected.length,
+    });
+    return timingSafeEqual(tag, expected);
+  } catch {
+    // O argon2 recusa parâmetros fora dos limites (memória, passes, tamanho do salt ou do hash).
+    return false;
+  }
 }
