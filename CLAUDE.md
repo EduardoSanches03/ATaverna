@@ -15,3 +15,7 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Review de PRs
+
+Terminado um ticket, abra o PR (skill `mattpocock-skills:pr`, com `Closes #N`) e rode o skill `rabbit-loop` nele até a entrega que o skill define. A revisão final e o merge são do humano.

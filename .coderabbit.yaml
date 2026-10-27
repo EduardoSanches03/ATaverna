@@ -4,6 +4,10 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+  # Aprova sozinho quando todas as threads estão resolvidas e o último commit foi revisado:
+  # é o sinal de parada do skill rabbit-loop.
+  auto_approvals:
+    enabled: true
   path_instructions:
     - path: "apps/api/**"
       instructions: >-
