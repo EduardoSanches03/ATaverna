@@ -2,6 +2,7 @@ import {
   type CanActivate,
   createParamDecorator,
   type ExecutionContext,
+  Inject,
   Injectable,
   SetMetadata,
   UnauthorizedException,
@@ -19,9 +20,10 @@ type AuthenticatedRequest = Request & { session?: Session };
 
 @Injectable()
 export class SessionGuard implements CanActivate {
+  // Injeção explícita: o tsx do `pnpm dev` não emite os metadados de tipo dos parâmetros.
   constructor(
-    private readonly reflector: Reflector,
-    private readonly sessions: SessionService,
+    @Inject(Reflector) private readonly reflector: Reflector,
+    @Inject(SessionService) private readonly sessions: SessionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

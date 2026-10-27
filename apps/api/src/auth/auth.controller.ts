@@ -24,7 +24,7 @@ import { CurrentSession, Public } from './session.guard.js';
 export class AuthController {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
-    private readonly sessions: SessionService,
+    @Inject(SessionService) private readonly sessions: SessionService,
   ) {}
 
   private readonly dummyHash = hashPassword(randomUUID());
