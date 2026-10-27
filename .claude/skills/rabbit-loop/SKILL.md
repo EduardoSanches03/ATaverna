@@ -22,7 +22,7 @@ Rode `wait-review.sh <pr>` com `run_in_background` e continue quando ele termina
 | Resultado | Próximo passo |
 |---|---|
 | `APPROVED` | Entrega |
-| `CHANGES_REQUESTED`, `COMMENTED` | Passo 2 |
+| `CHANGES_REQUESTED`, `COMMENTED` | Passo 2. Sem thread aberta, leia o corpo dessa review (`gh api repos/{owner}/{repo}/pulls/<pr>/reviews`): comentários fora de thread (nitpick, fora do diff) entram na triagem e são respondidos num comentário do PR; sem nenhum, entrega |
 | `NO_NEW_REVIEW` | Passo 2. Se não houver thread aberta, entrega (o CodeRabbit revisou sem aprovar: diga isso na entrega) |
 | `TIMEOUT` | Entrega, avisando que o CodeRabbit não respondeu |
 

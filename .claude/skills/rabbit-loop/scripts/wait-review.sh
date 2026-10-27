@@ -20,9 +20,12 @@ while (( SECONDS < deadline )); do
   # Relido a cada volta: um push durante a espera muda o commit que importa.
   head=$(gh pr view "$pr" --json headRefOid -q .headRefOid)
 
+  # Cada resposta do bot dentro de uma thread também vira uma review COMMENTED, de corpo vazio:
+  # só conta a review com corpo (resumo e comentários) ou com veredito.
   state=$(gh api --paginate "repos/$repo/pulls/$pr/reviews" 2>/dev/null \
     | jq -rs --arg bot "$bot" --arg head "$head" --arg since "$since" '
-        [.[][] | select(.user.login == $bot and .commit_id == $head and .submitted_at > $since)]
+        [.[][] | select(.user.login == $bot and .commit_id == $head and .submitted_at > $since)
+               | select(.state != "COMMENTED" or (.body | length) > 0)]
         | sort_by(.submitted_at) | last | .state // empty' || true)
   if [[ -n $state ]]; then
     echo "$state $head"
