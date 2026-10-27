@@ -1,6 +1,7 @@
 import type { HealthResponse } from '@ataverna/shared';
 import { Controller, Get, Inject, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import { Public } from '../auth/session.guard.js';
 import { DATABASE, type Database } from '../database/database.module.js';
 
 @Controller('health')
@@ -9,6 +10,7 @@ export class HealthController {
 
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
+  @Public()
   @Get()
   async check(): Promise<HealthResponse> {
     try {

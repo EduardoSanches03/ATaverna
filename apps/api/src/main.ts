@@ -5,5 +5,10 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL não definida');
 }
 
-const app = await createApp({ databaseUrl });
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret || sessionSecret.length < 32) {
+  throw new Error('SESSION_SECRET não definida ou com menos de 32 caracteres');
+}
+
+const app = await createApp({ databaseUrl, sessionSecret });
 await app.listen(Number(process.env.PORT ?? 3000), '0.0.0.0');
