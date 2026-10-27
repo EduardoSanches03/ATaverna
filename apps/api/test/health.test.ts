@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
+import pg from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { startTestApp } from './support/app.js';
 
 describe('healthcheck', () => {
@@ -16,6 +17,22 @@ describe('healthcheck', () => {
     });
 
     it('responde ok', async () => {
+      const response = await request(app.getHttpServer()).get('/health');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ status: 'ok', database: 'ok' });
+    });
+
+    it('continua de pé e se reconecta depois que o banco derruba as conexões', async () => {
+      await request(app.getHttpServer()).get('/health').expect(200);
+
+      // Simula um restart do Postgres: encerra todas as conexões ociosas da API.
+      const admin = new pg.Client({ connectionString: inject('databaseUrl') });
+      await admin.connect();
+      await admin.query('select pg_terminate_backend(pid) from pg_stat_activity where pid <> pg_backend_pid() and datname = current_database()');
+      await admin.end();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
       const response = await request(app.getHttpServer()).get('/health');
 
       expect(response.status).toBe(200);

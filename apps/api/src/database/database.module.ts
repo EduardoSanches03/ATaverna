@@ -1,6 +1,7 @@
-import { type DynamicModule, Global, Inject, Module, type OnApplicationShutdown } from '@nestjs/common';
+import { type DynamicModule, Global, Inject, Logger, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
+import { poolLimits } from './pool-limits.js';
 import * as schema from './schema.js';
 
 export const DATABASE = Symbol('DATABASE');
@@ -17,7 +18,7 @@ export class DatabaseModule implements OnApplicationShutdown {
     return {
       module: DatabaseModule,
       providers: [
-        { provide: POOL, useFactory: () => new pg.Pool({ connectionString: databaseUrl, connectionTimeoutMillis: 5_000 }) },
+        { provide: POOL, useFactory: () => createPool(databaseUrl) },
         { provide: DATABASE, inject: [POOL], useFactory: (pool: pg.Pool) => drizzle(pool, { schema }) },
       ],
       exports: [DATABASE],
@@ -27,4 +28,15 @@ export class DatabaseModule implements OnApplicationShutdown {
   async onApplicationShutdown() {
     await this.pool.end();
   }
+}
+
+function createPool(databaseUrl: string): pg.Pool {
+  const logger = new Logger('Database');
+  const pool = new pg.Pool({ connectionString: databaseUrl, ...poolLimits });
+  // Sem este listener, um erro numa conexão ociosa (ex.: restart do Postgres) derruba o processo.
+  // O pool já descarta a conexão quebrada e abre outra na próxima query.
+  pool.on('error', (error) => {
+    logger.error(`Conexão ociosa com o banco caiu: ${error.message}`);
+  });
+  return pool;
 }
