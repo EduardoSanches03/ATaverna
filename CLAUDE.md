@@ -2,6 +2,10 @@
 
 Sempre responda em português do Brasil (pt-BR) neste repositório.
 
+## Implementação de tickets
+
+Todo ticket (issue) é resolvido com o skill `mattpocock-skills:tdd`, carregado antes de escrever qualquer código: ciclo red → green, um teste por vez, só nos pontos de teste definidos na spec (hoje, a API HTTP contra Postgres real).
+
 ## Agent skills
 
 ### Issue tracker
