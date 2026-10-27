@@ -17,7 +17,7 @@ export class DatabaseModule implements OnApplicationShutdown {
     return {
       module: DatabaseModule,
       providers: [
-        { provide: POOL, useFactory: () => new pg.Pool({ connectionString: databaseUrl }) },
+        { provide: POOL, useFactory: () => new pg.Pool({ connectionString: databaseUrl, connectionTimeoutMillis: 5_000 }) },
         { provide: DATABASE, inject: [POOL], useFactory: (pool: pg.Pool) => drizzle(pool, { schema }) },
       ],
       exports: [DATABASE],
