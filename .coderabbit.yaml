@@ -1,0 +1,18 @@
+language: "pt-BR"
+reviews:
+  profile: "chill"
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "apps/api/**"
+      instructions: >-
+        Confira as regras de acesso da spec (issue #1): o Mestre vê os PJs e edita os PdMs;
+        o Jogador vê e edita só o próprio PJ; História e Anotação são visíveis só para o autor;
+        um recurso que o Usuário não pode ver responde 404.
+    - path: "**/*.test.ts"
+      instructions: >-
+        Os testes devem passar pela API HTTP contra Postgres real, sem mockar colaboradores
+        internos nem conferir o resultado lendo direto do banco.
+chat:
+  auto_reply: true
