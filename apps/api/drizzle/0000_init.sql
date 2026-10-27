@@ -1,0 +1,1 @@
+-- Migração inicial: ainda sem tabelas de domínio.

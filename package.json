@@ -1,0 +1,13 @@
+{
+  "name": "ataverna",
+  "private": true,
+  "packageManager": "pnpm@12.15.0",
+  "engines": { "node": ">=26" },
+  "scripts": {
+    "dev:api": "pnpm --filter @ataverna/api dev",
+    "dev:web": "pnpm --filter @ataverna/web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
