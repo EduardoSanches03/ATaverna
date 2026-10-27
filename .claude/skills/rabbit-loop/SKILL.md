@@ -17,7 +17,7 @@ Máximo de **5 rodadas**. Na 6ª, vá direto para a entrega.
 
 ### 1. Esperar a review
 
-Rode `wait-review.sh <pr>` com `run_in_background` e continue quando ele terminar. A linha impressa decide o próximo passo:
+Rode `wait-review.sh <pr>` com `run_in_background` e continue quando ele terminar. Depois de uma rodada sem push, passe também a data anotada no passo 4 (`wait-review.sh <pr> <desde>`), para esperar a reação às respostas e não a review antiga do mesmo commit. A linha impressa decide o próximo passo:
 
 | Resultado | Próximo passo |
 |---|---|
@@ -47,7 +47,7 @@ Concluído quando `pnpm test` e `pnpm typecheck` passam na raiz.
 
 ### 4. Enviar e responder
 
-1. Commit único da rodada, `fix: aplica review do CodeRabbit (rodada N)`, com um item por thread corrigida, e push.
+1. Com alguma correção: commit único da rodada, `fix: aplica review do CodeRabbit (rodada N)`, com um item por thread corrigida, e push. Sem correção (todas contestadas ou já resolvidas): sem commit nem push; anote a data atual (`date -u +%FT%TZ`) para o passo 1.
 2. Para cada thread aberta, escreva a resposta num arquivo do scratchpad e rode `reply-and-resolve.sh <thread_id> <arquivo>`:
    - corrigida: o que mudou e o commit;
    - não procede ou já resolvida: a resposta preparada no passo 2.
